@@ -1,0 +1,20 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+error-stack = { version = "0.5.0", features = ["anyhow"] }
+futures = "0.3.30"
+futures-util = "0.3.30"
+k8s-openapi = { version = "0.22.0", features = ["v1_30"] }
+kube = "0.93.1"
+podman-api = "0.10.0"
+redis = { version = "0.25.4", features = ["aio", "tokio-comp"] }
+rstest = "0.21.0"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
+tokio = { version = "1.38.0", features = ["full", "tracing"] }
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
