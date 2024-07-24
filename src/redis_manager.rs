@@ -11,6 +11,7 @@ use tokio::time::{timeout, Duration};
 static MAX_POOL_SIZE: usize = 100;
 type PubSubT = redis::aio::PubSub<Pin<Box<dyn AsyncStream + std::marker::Send + Sync>>>;
 
+#[derive(Clone)]
 pub struct RedisManager {
     client: Arc<Client>,
     #[allow(dead_code)]
@@ -123,17 +124,5 @@ impl RedisManager {
         self.return_pubsub_connection(conn).await;
 
         response
-    }
-}
-
-impl Clone for RedisManager {
-    fn clone(&self) -> Self {
-        RedisManager {
-            client: Arc::clone(&self.client),
-            sync_connection_pool: Arc::clone(&self.sync_connection_pool),
-            async_connection_pool: Arc::clone(&self.async_connection_pool),
-            pubsub_connection_pool: Arc::clone(&self.pubsub_connection_pool),
-            max_pool_size: self.max_pool_size,
-        }
     }
 }
