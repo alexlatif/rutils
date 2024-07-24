@@ -48,17 +48,17 @@ impl RedisManager {
     }
 
     async fn get_async_connection(&self) -> Result<MultiplexedConnection, RedisError> {
-        // Lock and unlock the pool to avoid holding the MutexGuard across an await point
+        // Extract the connection out of the Mutex scope
         let conn = {
             let mut pool = self.async_connection_pool.lock().unwrap();
             pool.pop_front()
         };
 
         if let Some(conn) = conn {
-            Ok(conn)
-        } else {
-            self.client.get_multiplexed_async_connection().await
+            return Ok(conn);
         }
+        // If no connection in pool, create a new one outside the lock
+        self.client.get_multiplexed_async_connection().await
     }
 
     async fn get_pubsub_connection(&self) -> Result<PubSubT, RedisError> {
