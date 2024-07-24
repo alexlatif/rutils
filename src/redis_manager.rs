@@ -48,8 +48,13 @@ impl RedisManager {
     }
 
     async fn get_async_connection(&self) -> Result<MultiplexedConnection, RedisError> {
-        let mut pool = self.async_connection_pool.lock().unwrap();
-        if let Some(conn) = pool.pop_front() {
+        // Lock and unlock the pool to avoid holding the MutexGuard across an await point
+        let conn = {
+            let mut pool = self.async_connection_pool.lock().unwrap();
+            pool.pop_front()
+        };
+
+        if let Some(conn) = conn {
             Ok(conn)
         } else {
             self.client.get_multiplexed_async_connection().await
@@ -57,8 +62,13 @@ impl RedisManager {
     }
 
     async fn get_pubsub_connection(&self) -> Result<PubSubT, RedisError> {
-        let mut pool = self.pubsub_connection_pool.lock().unwrap();
-        if let Some(conn) = pool.pop_front() {
+        // Lock and unlock the pool to avoid holding the MutexGuard across an await point
+        let conn = {
+            let mut pool = self.pubsub_connection_pool.lock().unwrap();
+            pool.pop_front()
+        };
+
+        if let Some(conn) = conn {
             Ok(conn)
         } else {
             self.client.get_async_pubsub().await
@@ -74,6 +84,7 @@ impl RedisManager {
     }
 
     async fn return_async_connection(&self, conn: MultiplexedConnection) {
+        // Lock and unlock the pool to avoid holding the MutexGuard across an await point
         let mut pool = self.async_connection_pool.lock().unwrap();
         if pool.len() < self.max_pool_size {
             pool.push_back(conn);
@@ -81,6 +92,7 @@ impl RedisManager {
     }
 
     async fn return_pubsub_connection(&self, conn: PubSubT) {
+        // Lock and unlock the pool to avoid holding the MutexGuard across an await point
         let mut pool = self.pubsub_connection_pool.lock().unwrap();
         if pool.len() < self.max_pool_size {
             pool.push_back(conn);
@@ -99,9 +111,9 @@ impl RedisManager {
         subscribe_channel: &str,
         timeout_duration: Duration,
     ) -> Result<String, RedisError> {
-        let mut conn = self.get_pubsub_connection().await.unwrap();
+        let mut conn = self.get_pubsub_connection().await?;
 
-        conn.subscribe(subscribe_channel).await.unwrap();
+        conn.subscribe(subscribe_channel).await?;
 
         let mut pubsub_stream = conn.on_message();
         let response = match timeout(timeout_duration, pubsub_stream.next()).await {
@@ -119,8 +131,8 @@ impl RedisManager {
             ))),
         };
 
-        drop(pubsub_stream);
-        conn.unsubscribe(subscribe_channel).await.unwrap();
+        drop(pubsub_stream); // Explicitly drop the stream
+        conn.unsubscribe(subscribe_channel).await?;
         self.return_pubsub_connection(conn).await;
 
         response
