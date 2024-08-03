@@ -7,7 +7,7 @@ use tokio::time::{timeout, Duration};
 
 static MAX_POOL_SIZE: usize = 100;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct RedisManager {
     client: Arc<Client>,
     sync_connection_pool: Arc<Mutex<VecDeque<redis::Connection>>>,
