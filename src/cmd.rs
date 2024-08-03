@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use tokio::io::AsyncBufReadExt;
 use tokio::process::Command as TokioCommand;
-pub use tracing::{error, info};
+pub use tracing::{debug, error};
 
 use super::errors::{AnyErr, RResult};
 
@@ -23,7 +23,7 @@ fn stream_output(child: &mut std::process::Child) -> RResult<(), AnyErr> {
     let stdout_handle = std::thread::spawn(move || {
         for line in stdout_reader.lines() {
             match line {
-                Ok(line) => info!("{}", line),
+                Ok(line) => debug!("{}", line),
                 Err(e) => error!("Error reading stdout line: {}", e),
             }
         }
@@ -32,7 +32,7 @@ fn stream_output(child: &mut std::process::Child) -> RResult<(), AnyErr> {
     let stderr_handle = std::thread::spawn(move || {
         for line in stderr_reader.lines() {
             match line {
-                Ok(line) => info!("{}", line),
+                Ok(line) => debug!("{}", line),
                 Err(e) => error!("Error reading stderr line: {}", e),
             }
         }
