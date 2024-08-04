@@ -53,7 +53,7 @@ pub struct OtlpProviders {
     pub logger_provider: Option<opentelemetry_sdk::logs::LoggerProvider>,
     pub tracer_provider: Option<opentelemetry_sdk::trace::TracerProvider>,
     // Will always create one, dummy if not being initiated by user, to allow meter() to still work:
-    pub meter_provider: opentelemetry_sdk::metrics::SdkMeterProvider,
+    pub meter_provider: opentelemetry_sdk::metrics::MeterProvider,
 }
 
 impl GlobalLog {

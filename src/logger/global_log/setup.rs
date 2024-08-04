@@ -4,6 +4,28 @@ use tracing_subscriber::{filter::FilterFn, layer::SubscriberExt, registry::Looku
 use super::{builder::GlobalLogBuilder, GlobalLog};
 use crate::{logger::global_log::event_formatter::CustEventFormatter, prelude::*};
 
+use std::{
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4, TcpStream},
+    time::Duration,
+};
+
+pub fn is_tcp_port_listening(host: &str, port: u16) -> RResult<bool, AnyErr> {
+    let timeout_duration = Duration::from_secs(1); // Timeout duration set to 1 second
+
+    let ip = if host == "localhost" {
+        Ipv4Addr::LOCALHOST
+    } else {
+        host.parse::<Ipv4Addr>().change_context(AnyErr)?
+    };
+
+    let socket_addr = SocketAddr::V4(SocketAddrV4::new(ip, port));
+
+    match TcpStream::connect_timeout(&socket_addr, timeout_duration) {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
+}
+
 /// Need the write trait for our write function.
 impl std::io::Write for super::builder::CustomConf {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
@@ -51,7 +73,7 @@ pub fn builder_into_global_log(builder: GlobalLogBuilder) -> RResult<GlobalLog, 
         OtlpProviders {
             logger_provider: None,
             tracer_provider: None,
-            meter_provider: opentelemetry_sdk::metrics::SdkMeterProvider::default(),
+            meter_provider: opentelemetry_sdk::metrics::MeterProvider::default(),
         }
     };
     let mut out_layers = vec![];
@@ -184,7 +206,7 @@ pub fn builder_into_global_log(builder: GlobalLogBuilder) -> RResult<GlobalLog, 
                     let mut found_collector = false;
                     let mut is_first = true;
                     while wait_start.elapsed() < std::time::Duration::from_secs(10) {
-                        if crate::misc::is_tcp_port_listening("localhost", port)? {
+                        if is_tcp_port_listening("localhost", port)? {
                             found_collector = true;
 
                             // If printed the spinlocking message, confirm all good now:
@@ -273,9 +295,10 @@ pub fn builder_into_global_log(builder: GlobalLogBuilder) -> RResult<GlobalLog, 
                     let logging_provider = logger
                         .provider()
                         .ok_or_else(|| anyerr!("No logger provider attached."))?;
-                    let log_layer = crate::log::ot_tracing_bridge::OpenTelemetryTracingBridge::new(
-                        &logging_provider,
-                    );
+                    let log_layer =
+                        crate::logger::ot_tracing_bridge::OpenTelemetryTracingBridge::new(
+                            &logging_provider,
+                        );
                     otlp_providers.logger_provider = Some(logging_provider.clone());
                     add_layer!(otlp.shared, log_layer);
 
