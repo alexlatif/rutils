@@ -28,7 +28,7 @@ pub mod otlp {
     pub mod metrics {
         pub use opentelemetry::metrics::{
             Counter, Histogram, ObservableCounter, ObservableGauge, ObservableUpDownCounter,
-            SyncCounter, SyncHistogram, SyncUpDownCounter, Unit, UpDownCounter,
+            SyncCounter, SyncHistogram, SyncUpDownCounter, UpDownCounter,
         };
     }
 }

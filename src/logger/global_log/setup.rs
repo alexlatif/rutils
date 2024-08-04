@@ -51,7 +51,7 @@ pub fn builder_into_global_log(builder: GlobalLogBuilder) -> RResult<GlobalLog, 
         OtlpProviders {
             logger_provider: None,
             tracer_provider: None,
-            meter_provider: opentelemetry_sdk::metrics::MeterProvider::default(),
+            meter_provider: opentelemetry_sdk::metrics::SdkMeterProvider::default(),
         }
     };
     let mut out_layers = vec![];

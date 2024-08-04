@@ -53,7 +53,7 @@ pub struct OtlpProviders {
     pub logger_provider: Option<opentelemetry_sdk::logs::LoggerProvider>,
     pub tracer_provider: Option<opentelemetry_sdk::trace::TracerProvider>,
     // Will always create one, dummy if not being initiated by user, to allow meter() to still work:
-    pub meter_provider: opentelemetry_sdk::metrics::MeterProvider,
+    pub meter_provider: opentelemetry_sdk::metrics::SdkMeterProvider,
 }
 
 impl GlobalLog {
@@ -108,7 +108,7 @@ impl GlobalLog {
     ) -> RResult<(), AnyErr> {
         use tracing_opentelemetry::OpenTelemetrySpanExt;
 
-        use crate::log::global_log::http_headers::HeaderExtractor;
+        use crate::logger::global_log::http_headers::HeaderExtractor;
 
         let ctx_extractor = HeaderExtractor(headers);
         let ctx = opentelemetry::global::get_text_map_propagator(|propagator| {
@@ -126,7 +126,7 @@ impl GlobalLog {
     ) -> RResult<(), AnyErr> {
         use tracing_opentelemetry::OpenTelemetrySpanExt;
 
-        use crate::log::global_log::http_headers::HeaderInjector;
+        use crate::logger::global_log::http_headers::HeaderInjector;
 
         let ctx = tracing::Span::current().context();
         let mut injector = HeaderInjector(response.headers_mut());
