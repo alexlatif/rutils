@@ -3,6 +3,7 @@
 pub mod cmd;
 pub mod errors;
 pub mod k8_manager;
+pub mod logger;
 pub mod prelude;
 pub mod redis_manager;
 

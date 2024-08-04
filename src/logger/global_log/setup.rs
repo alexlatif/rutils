@@ -2,7 +2,7 @@ use tracing::{Dispatch, Level, Metadata, Subscriber};
 use tracing_subscriber::{filter::FilterFn, layer::SubscriberExt, registry::LookupSpan, Layer};
 
 use super::{builder::GlobalLogBuilder, GlobalLog};
-use crate::{log::global_log::event_formatter::CustEventFormatter, prelude::*};
+use crate::{logger::global_log::event_formatter::CustEventFormatter, prelude::*};
 
 /// Need the write trait for our write function.
 impl std::io::Write for super::builder::CustomConf {

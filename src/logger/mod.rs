@@ -2,6 +2,7 @@
 mod diff_file_log;
 mod global_log;
 mod macros;
+
 #[cfg(any(feature = "opentelemetry-grpc", feature = "opentelemetry-http"))]
 mod ot_tracing_bridge;
 
@@ -30,6 +31,15 @@ pub mod otlp {
             SyncCounter, SyncHistogram, SyncUpDownCounter, Unit, UpDownCounter,
         };
     }
+}
+
+static CI_ENV_VARS: [&str; 4] = ["GITHUB_ACTIONS", "TRAVIS", "CIRCLECI", "GITLAB_CI"];
+
+/// Returns true if the current process seems to be running in CI.
+pub fn in_ci() -> bool {
+    CI_ENV_VARS
+        .iter()
+        .any(|var| std::env::var_os(var).is_some())
 }
 
 #[cfg(test)]
@@ -341,8 +351,6 @@ mod tests {
     async fn _inner_test_opentelemetry(builder: GlobalLogBuilder) -> RResult<(), AnyErr> {
         use std::path::PathBuf;
 
-        use crate::misc::in_ci;
-
         // Collector won't be running ci:
         if in_ci() {
             return Ok(());
@@ -356,7 +364,7 @@ mod tests {
                 .len();
         }
 
-        let log = builder.level_from(Level::DEBUG)?.build()?;
+        let log: GlobalLog = builder.level_from(Level::DEBUG)?.build()?;
 
         log.with_tmp_global(|| {
             debug!("BEFORE");
