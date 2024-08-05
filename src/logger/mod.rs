@@ -7,13 +7,13 @@ mod macros;
 mod ot_tracing_bridge;
 
 #[cfg(all(
-    feature = "system",
+    // feature = "system",
     any(feature = "opentelemetry-grpc", feature = "opentelemetry-http")
 ))]
 mod system_and_process_metrics;
 pub use global_log::{global_fns::*, GlobalLog, GlobalLogBuilder};
 #[cfg(all(
-    feature = "system",
+    // feature = "system",
     any(feature = "opentelemetry-grpc", feature = "opentelemetry-http")
 ))]
 pub use system_and_process_metrics::*;
