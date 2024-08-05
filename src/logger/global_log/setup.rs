@@ -242,7 +242,13 @@ pub fn builder_into_global_log(builder: GlobalLogBuilder) -> RResult<GlobalLog, 
                 if let Some(endpoint) = otlp.http_endpoint {
                     use opentelemetry_otlp::{new_exporter, WithExportConfig};
 
-                    let get_exporter = || new_exporter().http().with_endpoint(&endpoint);
+                    let get_exporter = || {
+                        new_exporter()
+                            .http()
+                            .with_endpoint(&endpoint)
+                            .with_headers(otlp.headers.clone())
+                    };
+
                     exporters.push((
                         get_exporter().into(),
                         get_exporter().into(),

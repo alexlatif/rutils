@@ -1,5 +1,5 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
-
 use tracing::Level;
 
 use super::GlobalLog;
@@ -74,6 +74,7 @@ pub struct OtlpConf {
     /// The active version/deployment of the service:
     pub service_version: String,
     pub shared: SharedOpts,
+    pub headers: HashMap<String, String>,
 }
 
 /// The global log builder. See the [`GlobalLog`] struct for more information.
@@ -167,6 +168,7 @@ impl GlobalLogBuilder {
             service_name: service_name.into(),
             service_version: service_version.into(),
             shared: SharedOpts::default(),
+            headers: HashMap::new(),
         }));
         self
     }
@@ -183,6 +185,7 @@ impl GlobalLogBuilder {
         endpoint: impl Into<String>,
         service_name: impl Into<String>,
         service_version: impl Into<String>,
+        headers: HashMap<String, String>,
     ) -> Self {
         self.outputs.push(Output::Otlp(OtlpConf {
             #[cfg(feature = "opentelemetry-grpc")]
@@ -191,6 +194,7 @@ impl GlobalLogBuilder {
             service_name: service_name.into(),
             service_version: service_version.into(),
             shared: SharedOpts::default(),
+            headers,
         }));
         self
     }

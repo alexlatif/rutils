@@ -344,6 +344,7 @@ mod tests {
             "http://localhost:4318",
             "rust-test",
             "0.1.0",
+            HashMap::new(),
         ))
         .await
     }
