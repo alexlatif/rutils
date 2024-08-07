@@ -1,6 +1,8 @@
 use anyhow::Result;
 use futures_util::stream::StreamExt;
-use redis::{aio::MultiplexedConnection, aio::PubSub, AsyncCommands, Client, RedisError};
+use redis::{
+    aio::MultiplexedConnection, aio::PubSub, AsyncCommands, Client, Connection, RedisError,
+};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use tokio::time::{timeout, Duration};
@@ -30,6 +32,39 @@ impl RedisManager {
         })
     }
 
+    pub fn get_sync_conn(&self) -> Result<SyncConnectionGuard, RedisError> {
+        let mut pool = self.sync_connection_pool.lock().unwrap();
+        if let Some(conn) = pool.pop_front() {
+            Ok(SyncConnectionGuard {
+                manager: self.clone(),
+                connection: Some(conn),
+            })
+        } else {
+            let conn = self.client.get_connection()?;
+            Ok(SyncConnectionGuard {
+                manager: self.clone(),
+                connection: Some(conn),
+            })
+        }
+    }
+
+    pub async fn get_async_conn(&self) -> Result<AsyncConnectionGuard, RedisError> {
+        let mut pool = self.async_connection_pool.lock().unwrap();
+        if let Some(conn) = pool.pop_front() {
+            Ok(AsyncConnectionGuard {
+                manager: self.clone(),
+                connection: Some(conn),
+            })
+        } else {
+            let conn = self.client.get_multiplexed_async_connection().await?;
+            Ok(AsyncConnectionGuard {
+                manager: self.clone(),
+                connection: Some(conn),
+            })
+        }
+    }
+
+    // TODO drop these connections
     pub fn get_sync_connection(&self) -> Result<redis::Connection, RedisError> {
         let conn = {
             let mut pool = self.sync_connection_pool.lock().unwrap();
@@ -43,7 +78,7 @@ impl RedisManager {
         }
     }
 
-    async fn get_async_connection(&self) -> Result<MultiplexedConnection, RedisError> {
+    pub async fn get_async_connection(&self) -> Result<MultiplexedConnection, RedisError> {
         let conn = {
             let mut pool = self.async_connection_pool.lock().unwrap();
             pool.pop_front()
@@ -57,14 +92,14 @@ impl RedisManager {
     }
 
     #[allow(dead_code)]
-    fn return_sync_connection(&self, conn: redis::Connection) {
+    pub fn return_sync_connection(&self, conn: redis::Connection) {
         let mut pool = self.sync_connection_pool.lock().unwrap();
         if pool.len() < MAX_POOL_SIZE {
             pool.push_back(conn);
         }
     }
 
-    async fn return_async_connection(&self, conn: MultiplexedConnection) {
+    pub async fn return_async_connection(&self, conn: MultiplexedConnection) {
         let mut pool = self.async_connection_pool.lock().unwrap();
         if pool.len() < MAX_POOL_SIZE {
             pool.push_back(conn);
@@ -127,5 +162,72 @@ impl RedisManager {
         self.return_pubsub_connection(conn).await;
 
         response
+    }
+
+    pub async fn flushdb(&self) -> Result<(), RedisError> {
+        let mut conn = self.client.get_multiplexed_async_connection().await?;
+
+        redis::cmd("FLUSHDB").query_async(&mut conn).await?;
+
+        drop(conn);
+        Ok(())
+    }
+}
+
+pub struct SyncConnectionGuard {
+    manager: RedisManager,
+    connection: Option<Connection>,
+}
+
+impl std::ops::Deref for SyncConnectionGuard {
+    type Target = Connection;
+
+    fn deref(&self) -> &Self::Target {
+        self.connection.as_ref().unwrap()
+    }
+}
+
+impl std::ops::DerefMut for SyncConnectionGuard {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.connection.as_mut().unwrap()
+    }
+}
+
+impl Drop for SyncConnectionGuard {
+    fn drop(&mut self) {
+        if let Some(conn) = self.connection.take() {
+            let manager = self.manager.clone();
+            manager.return_sync_connection(conn);
+        }
+    }
+}
+
+pub struct AsyncConnectionGuard {
+    manager: RedisManager,
+    connection: Option<MultiplexedConnection>,
+}
+
+impl std::ops::Deref for AsyncConnectionGuard {
+    type Target = MultiplexedConnection;
+
+    fn deref(&self) -> &Self::Target {
+        self.connection.as_ref().unwrap()
+    }
+}
+
+impl std::ops::DerefMut for AsyncConnectionGuard {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.connection.as_mut().unwrap()
+    }
+}
+
+impl Drop for AsyncConnectionGuard {
+    fn drop(&mut self) {
+        if let Some(conn) = self.connection.take() {
+            let manager = self.manager.clone();
+            tokio::spawn(async move {
+                manager.return_async_connection(conn).await;
+            });
+        }
     }
 }
