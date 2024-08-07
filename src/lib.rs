@@ -4,6 +4,7 @@ pub mod cmd;
 pub mod errors;
 // pub mod logger;
 pub mod prelude;
+pub mod python;
 pub mod redis_manager;
 pub mod redis_tracing;
 
