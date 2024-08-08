@@ -13,7 +13,7 @@ pub mod prelude {
     pub use error_stack::{Report, ResultExt};
 
     #[allow(unused_imports)]
-    pub use super::{AnyErr, RResult};
+    pub use super::{AnyErr, AnyErr2, RResult};
 
     #[allow(unused_imports)]
     pub use crate::err2;
