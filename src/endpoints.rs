@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use tracing::{error, info};
 
 #[derive(Default)]
-struct EndpointBuilder {
+pub struct EndpointBuilder {
     base_url: Option<String>,
     endpoint: Option<String>,
     method: Option<Method>,
@@ -62,7 +62,7 @@ impl EndpointBuilder {
     }
 }
 
-struct Endpoint {
+pub struct Endpoint {
     base_url: String,
     endpoint: String,
     method: Method,
