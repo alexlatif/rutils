@@ -1,8 +1,7 @@
 mod any;
 mod macros;
 
-pub use any::AnyErr;
-pub use any::AnyErr2;
+pub use any::{AnyErr, AnyErr2};
 
 /// Shorthand for a [`Result`] with a [`error_stack::Report`] as the error variant
 pub type RResult<T, C> = Result<T, error_stack::Report<C>>;
