@@ -78,9 +78,9 @@ impl Endpoint {
         EndpointBuilder::new()
     }
 
-    pub async fn send(self) -> Result<Value, Box<dyn std::error::Error>> {
+    pub async fn send(self) -> RResult<Value, AnyErr2> {
         let client = Client::new();
-        let mut url = Url::parse(&self.base_url)?;
+        let mut url = Url::parse(&self.base_url).change_context(err2!("Failed to parse URL"))?;
 
         url.set_path(&self.endpoint);
 
@@ -97,7 +97,10 @@ impl Endpoint {
             request = request.json(&json);
         }
 
-        let response = request.send().await?;
+        let response = request
+            .send()
+            .await
+            .change_context(err2!("Failed to send request"))?;
 
         if response.status().is_success() {
             match response.json::<Value>().await {
@@ -107,12 +110,18 @@ impl Endpoint {
                 }
                 Err(e) => {
                     error!("Failed to parse JSON response: {:?}", e);
-                    Err(Box::new(e))
+                    Err(Report::new(err2!(format!(
+                        "Failed to parse JSON response: {:?}",
+                        e
+                    ))))
                 }
             }
         } else {
             let status = response.status();
-            let error_text = response.text().await?;
+            let error_text = response
+                .text()
+                .await
+                .change_context(err2!("Failed to get error text"))?;
 
             let re = Regex::new(r"\x1B\[[0-9;]*[mK]").unwrap();
             let cleaned_error_text = re.replace_all(&error_text, "").to_string();
@@ -130,14 +139,14 @@ impl Endpoint {
                         "Request FAILED with status {:?} and error: {:#?}",
                         status, json
                     );
-                    Err(err!(AnyErr, "Request failed with error details").into())
+                    Err(Report::new(err2!("Request failed with JSON error text")))
                 }
                 Err(_) => {
                     error!(
                         "Request FAILED with status {:?} and error: {}",
                         status, cleaned_error_text
                     );
-                    Err(err!(AnyErr, "Request failed with plain error text").into())
+                    Err(Report::new(err2!("Request failed with text error")))
                 }
             }
         }
