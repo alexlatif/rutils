@@ -97,10 +97,20 @@ impl Endpoint {
             request = request.json(&json);
         }
 
-        let response = request
-            .send()
-            .await
-            .change_context(err2!("Failed to send request"))?;
+        // let response = request
+        //     .send()
+        //     .await
+        //     .change_context(err2!("Failed to send request"))?;
+        let response = match request.send().await {
+            Ok(resp) => resp,
+            Err(e) => {
+                error!("Failed to send request: {:?}", e);
+                return Err(Report::new(err2!(format!(
+                    "Failed to send request: {:?}",
+                    e
+                ))));
+            }
+        };
 
         if response.status().is_success() {
             match response.json::<Value>().await {
