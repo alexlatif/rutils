@@ -57,6 +57,21 @@ macro_rules! err {
     }};
 }
 
+#[macro_export]
+macro_rules! err2 {
+    ($context:expr) => {{
+        $crate::errors::AnyErr2::new($context)
+    }};
+
+    ($context:expr, $msg:expr) => {{
+        $crate::errors::AnyErr2::new(format!($msg, $context))
+    }};
+
+    ($context:expr, $fmt:expr, $($arg:expr),*) => {{
+        $crate::errors::AnyErr2::new(format!($fmt, $($arg),*))
+    }};
+}
+
 /// When working in a function that cannot return a result, use this to auto panic with the formatted error if something goes wrong.
 ///
 /// Allows use of e.g. `?` in the block.
