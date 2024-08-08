@@ -5,6 +5,8 @@ use serde_json::Value;
 use std::collections::HashMap;
 use tracing::{error, info};
 
+// pub use reqwest::Method;
+
 #[derive(Default)]
 pub struct EndpointBuilder {
     base_url: Option<String>,
