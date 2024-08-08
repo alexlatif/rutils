@@ -1,11 +1,11 @@
 use crate::errors::prelude::*;
 use regex::Regex;
-use reqwest::{Client, Method, Url};
+use reqwest::{Client, Url};
 use serde_json::Value;
 use std::collections::HashMap;
 use tracing::{error, info};
 
-// pub use reqwest::Method;
+pub use reqwest::Method;
 
 #[derive(Default)]
 pub struct EndpointBuilder {
