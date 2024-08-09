@@ -1,9 +1,8 @@
-use crate::errors::prelude::*;
+use crate::prelude::*;
 use regex::Regex;
 use reqwest::{Client, Url};
 use serde_json::Value;
 use std::collections::HashMap;
-use tracing::{error, info};
 
 pub use reqwest::Method;
 
@@ -115,7 +114,7 @@ impl Endpoint {
         if response.status().is_success() {
             match response.json::<Value>().await {
                 Ok(json) => {
-                    info!("Request SUCCESS: {:#?}", json);
+                    debug!("Request SUCCESS: {:#?}", json);
                     Ok(json)
                 }
                 Err(e) => {
