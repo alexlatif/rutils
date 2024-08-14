@@ -1,13 +1,14 @@
 #![allow(dead_code)]
 
 pub mod cmd;
+pub mod endpoints;
 pub mod errors;
 // pub mod logger;
-pub mod endpoints;
 pub mod prelude;
 pub mod python;
 pub mod redis_manager;
 pub mod redis_tracing;
+pub mod testing;
 
 // pub mod k8_manager;
 pub fn add(left: usize, right: usize) -> usize {
