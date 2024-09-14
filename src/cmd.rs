@@ -167,8 +167,8 @@ pub fn run_python_script(file: &str, args: Option<&[&str]>) {
     }
 }
 
-pub fn run_background_python_script(file: &str, args: Option<&[&str]>) -> JoinHandle<()> {
-    let file = file.to_string(); // Convert to owned `String`
+pub fn run_background_python_script(file: &str, args: Option<&[&str]>) {
+    let file = file.to_string();
     let args = args
         .unwrap_or(&[])
         .iter()
@@ -179,8 +179,8 @@ pub fn run_background_python_script(file: &str, args: Option<&[&str]>) -> JoinHa
     tokio::spawn(async move {
         let mut cmd = TokioCommand::new("pdm")
             .arg("run")
-            .arg(file) // `file` is now owned
-            .args(&args) // Pass owned `Vec<String>` to the args
+            .arg(file)
+            .args(&args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -217,5 +217,5 @@ pub fn run_background_python_script(file: &str, args: Option<&[&str]>) -> JoinHa
         if !status.success() {
             info!("Python script failed with status: {}", status);
         }
-    })
+    });
 }
