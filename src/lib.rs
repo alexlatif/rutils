@@ -4,6 +4,7 @@ pub mod cmd;
 pub mod endpoints;
 pub mod errors;
 // pub mod logger;
+pub mod data_utils;
 pub mod files;
 pub mod prelude;
 pub mod python;
